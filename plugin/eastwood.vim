@@ -8,17 +8,28 @@ else
     let g:syntastic_extra_filetypes = ['clojure']
 endif
 
-function! g:EastwoodRequire()
-    let cmd = "(require 'eastwood.lint)"
+function! s:fireplaceConnected() abort
+  return exists('*fireplace#client') && has_key(fireplace#client(), 'connection')
+endfunc
+
+function! g:EastwoodRequire() abort
+    if !s:fireplaceConnected()
+      return 0
+    endif
+
     try
-        call fireplace#session_eval(cmd)
-        return ''
-    catch /^Clojure:.*/
-        return ''
+        call fireplace#session_eval("(require 'eastwood.lint)")
+        return 1
+    catch /Clojure:|Fireplace:/
+        return 0
     endtry
 endfunction
 
 function! g:EastwoodLintNS(...) abort
+    if !g:EastwoodRequire()
+      return []
+    endif
+
     let opts = a:0 ? a:1 : {}
     let add_linters = exists('opts.add_linters') ? opts.add_linters : []
 
@@ -35,9 +46,7 @@ function! g:EastwoodLintNS(...) abort
             \     " :bufnr " . bufnr('%')  .
             \     " :type \"E\"})))"
     try
-        call g:EastwoodRequire() " In case if REPL was restarted
-        let res=fireplace#query(cmd)
-        return res
+        return fireplace#query(cmd)
     catch /^Clojure:.*/
         return []
     endtry

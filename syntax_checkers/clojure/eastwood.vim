@@ -7,7 +7,7 @@
 "
 "============================================================================
 
-if exists("g:loaded_syntastic_clojure_eastwood_checker")
+if exists('g:loaded_syntastic_clojure_eastwood_checker')
     finish
 endif
 let g:loaded_syntastic_clojure_eastwood_checker = 1
@@ -17,12 +17,7 @@ set cpo&vim
 
 " Try to require 'eastwood.lint
 function! SyntaxCheckers_clojure_eastwood_IsAvailable() dict
-    try
-        call g:EastwoodRequire()
-        return 1
-    catch
-        return 0
-    endtry
+    return 1
 endfunction
 
 function! SyntaxCheckers_clojure_eastwood_GetLocList() dict
