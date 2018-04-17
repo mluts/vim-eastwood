@@ -9,7 +9,14 @@ else
 endif
 
 function! s:fireplaceConnected() abort
-  return exists('*fireplace#client') && has_key(fireplace#client(), 'connection')
+  let connected = 0
+
+  try
+    let connected = exists('*fireplace#client') && has_key(fireplace#client(), 'connection')
+  catch /\v\cfireplace:|clojure:/
+  endtry
+
+  return connected
 endfunc
 
 function! g:EastwoodRequire() abort
@@ -20,7 +27,7 @@ function! g:EastwoodRequire() abort
     try
         call fireplace#session_eval("(require 'eastwood.lint)")
         return 1
-    catch /Clojure:|Fireplace:/
+    catch /\v\cfireplace:|clojure:/
         return 0
     endtry
 endfunction
@@ -33,21 +40,21 @@ function! g:EastwoodLintNS(...) abort
     let opts = a:0 ? a:1 : {}
     let add_linters = exists('opts.add_linters') ? opts.add_linters : []
 
-    let cmd = "(->> (eastwood.lint/lint { " .
-            \     " :namespaces '[" . fireplace#ns() . "]" .
-            \     " :add-linters [" . join(map(copy(add_linters), '":" . v:val'), " ") ."]" .
-            \ " })" .
-            \ " :warnings" .
-            \ " (map (fn [e]" .
-            \     "{:text (:msg e)" .
-            \     " :lnum (:line e)"  .
-            \     " :col (:column e)" .
-            \     " :valid true"  .
-            \     " :bufnr " . bufnr('%')  .
-            \     " :type \"E\"})))"
+    let cmd = '(->> (eastwood.lint/lint { ' .
+            \     " :namespaces '[" . fireplace#ns() . ']' .
+            \     ' :add-linters [' . join(map(copy(add_linters), '":" . v:val'), ' ') .']' .
+            \ ' })' .
+            \ ' :warnings' .
+            \ ' (map (fn [e]' .
+            \     '{:text (:msg e)' .
+            \     ' :lnum (:line e)'  .
+            \     ' :col (:column e)' .
+            \     ' :valid true'  .
+            \     ' :bufnr ' . bufnr('%')  .
+            \     ' :type "E"})))'
     try
         return fireplace#query(cmd)
-    catch /^Clojure:.*/
+    catch /\v\cfireplace:|clojure:/
         return []
     endtry
 endfunction
